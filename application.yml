@@ -57,9 +57,8 @@ plugins:
       - WEBEMBEDDED
     oauth:
       enabled: true
-      # refreshToken will be filled automatically after first login
-      # or you can set it manually here after activating at youtube.com/activate
-      refreshToken: ""
+      # Do NOT set refreshToken here until you complete the OAuth flow once
+      # The activation code will appear in the logs after redeploy
   
   lavasrc:
     providers:
@@ -104,6 +103,8 @@ logging:
   level:
     root: WARN
     lavalink: INFO
+    # Required to see the OAuth activation code in logs
+    dev.lavalink.youtube.http.YoutubeOauth2Handler: INFO
   
   logback:
     rollingpolicy:
