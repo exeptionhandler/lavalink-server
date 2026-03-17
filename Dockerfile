@@ -14,7 +14,6 @@ RUN apk add --no-cache curl
 RUN addgroup -g 322 lavalink && adduser -u 322 -G lavalink -s /bin/sh -D lavalink
 
 # Copy Java and all dependencies from Lavalink image
-# This includes the full JVM with all native libraries
 COPY --from=ghcr.io/lavalink-devs/lavalink:4-alpine /usr/lib/jvm /usr/lib/jvm
 COPY --from=ghcr.io/lavalink-devs/lavalink:4-alpine /usr/bin/java /usr/bin/java
 
@@ -42,11 +41,10 @@ COPY public/ /usr/share/nginx/html/
 COPY start.sh /opt/start.sh
 RUN chmod +x /opt/start.sh
 
-# Pre-download plugins at build time so they are baked into the image
-# This avoids runtime download failures on Render's ephemeral filesystem
+# Pre-download plugins at build time (baked into image, no runtime download needed)
 RUN mkdir -p /opt/Lavalink/plugins && \
     curl -fsSL -o /opt/Lavalink/plugins/youtube-plugin.jar \
-      "https://maven.lavalink.dev/releases/dev/lavalink/youtube/youtube-plugin/1.17.0/youtube-plugin-1.17.0.jar" && \
+      "https://maven.lavalink.dev/releases/dev/lavalink/youtube/youtube-plugin/1.18.0/youtube-plugin-1.18.0.jar" && \
     curl -fsSL -o /opt/Lavalink/plugins/lavasrc-plugin.jar \
       "https://maven.lavalink.dev/releases/com/github/topi314/lavasrc/lavasrc-plugin/4.8.1/lavasrc-plugin-4.8.1.jar"
 
@@ -58,7 +56,7 @@ RUN mkdir -p /var/log/nginx /opt/Lavalink/logs /run/nginx && \
 # Expose single port (default 10000, Render's standard)
 EXPOSE 10000
 
-# Health check configuration  
+# Health check configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:${PORT:-10000}/version || exit 1
 
