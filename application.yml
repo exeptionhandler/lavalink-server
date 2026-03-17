@@ -7,6 +7,7 @@ lavalink:
   plugins:
     # YouTube Source Plugin - Mandatory for v4
     - dependency: "dev.lavalink.youtube:youtube-plugin:1.17.0"
+      repository: "https://maven.lavalink.dev/releases"
     # LavaSrc - Adds support for Spotify, Apple Music, Deezer, and more
     - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.8.1"
       repository: "https://maven.lavalink.dev/releases"
@@ -58,7 +59,7 @@ plugins:
     allowDirectPlaylistIds: true
     clients:
       - MUSIC
-      - ANDROID_TEST
+      - ANDROID_TESTSUITE
       - WEB
       - TVHTML5EMBEDDED
   
