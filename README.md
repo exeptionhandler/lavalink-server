@@ -18,8 +18,9 @@
 
 - 🚀 **One-Click Deploy** - Deploy to Render with a single click
 - 📊 **Web Dashboard** - Beautiful real-time monitoring dashboard on the same port
-- 🎵 **Multi-Source Support** - YouTube, Spotify, Apple Music, Deezer, SoundCloud, Bandcamp, Twitch, Vimeo
-- 🔌 **Plugin System** - LavaSrc, LavaSearch, and SponsorBlock plugins pre-configured
+- 🎵 **Multi-Source Support** - YouTube (with OAuth), Spotify, Apple Music, Deezer, SoundCloud, Bandcamp, Twitch, Vimeo
+- 🔑 **YouTube OAuth** - Bypass age-restricted and login-required videos using a burner Google account
+- 🔌 **Plugin System** - LavaSrc and youtube-plugin pre-configured
 - 🎚️ **Audio Filters** - Equalizer, Karaoke, Timescale, Tremolo, Vibrato, Distortion, and more
 - 📊 **Monitoring** - Optional Prometheus metrics and Sentry error tracking
 - 🔒 **Secure** - Environment variable-based configuration, no hardcoded secrets
@@ -33,11 +34,11 @@ The easiest way to get started:
 
 1. **Click the Deploy to Render button above** or use this link:
    ```
-   https://render.com/deploy?repo=https://github.com/Hjgaming/lavalink-server
+   https://render.com/deploy?repo=https://github.com/exeptionhandler/lavalink-server
    ```
 
 2. **Configure your environment variables:**
-   - `LAVALINK_SERVER_PASSWORD` - Set a strong password (auto-generated if left empty)
+   - `LAVALINK_SERVER_PASSWORD` - Set a strong password
    - Optional: Add Spotify, Apple Music, or Deezer credentials for extended functionality
 
 3. **Deploy!** Render will automatically build and deploy your Lavalink server
@@ -46,7 +47,40 @@ The easiest way to get started:
    - Host: `your-service-name.onrender.com`
    - Port: `443` (HTTPS) or `80` (HTTP)
    - Password: The one you set in step 2
-   - Dashboard: `https://your-service-name.onrender.com/` (web interface)
+   - Dashboard: `https://your-service-name.onrender.com/`
+
+## 🔑 YouTube OAuth Setup
+
+This server uses the `TV` client with OAuth to bypass YouTube's login requirements (age-restricted videos, bot detection, etc.).
+
+> ⚠️ **Use a burner Google account — NOT your main account!**
+
+### First-Time Setup
+
+1. **Deploy** the server without setting `YOUTUBE_REFRESH_TOKEN` yet
+2. **Watch the logs** — you'll see something like:
+   ```
+   OAUTH INTEGRATION: To give youtube-source access to your account,
+   go to https://www.google.com/device and enter code XXX-XXX-XXX
+   ```
+3. **Open** `https://www.google.com/device` and enter the code with your burner account — you have ~5 minutes
+4. **Copy the refresh token** from the logs:
+   ```
+   Token retrieved successfully. Store your refresh token as this can be reused.
+   (1//xxxxxxxxxxxxxxxxxxxxxxxxx...)
+   ```
+5. **Add it as an environment variable** in Render:
+   - Key: `YOUTUBE_REFRESH_TOKEN`
+   - Value: `1//xxxxxxxxxxxxxxxxxxxxxxxxx...`
+6. **Redeploy** — the server will now load the token automatically on every start, no code needed again
+
+### YouTube Clients Used
+
+| Client | OAuth | Age-restriction | Playback |
+|--------|-------|-----------------|----------|
+| `MUSIC` | No | No | Search only (`ytmsearch:`) |
+| `TV` | ✅ Yes | ✅ With OAuth | Yes + Livestream |
+| `TVHTML5_SIMPLY` | No | No | Yes + Livestream (fallback) |
 
 ## 📊 Web Dashboard
 
@@ -71,14 +105,6 @@ The dashboard displays:
 - **Auto-refresh**: Updates every 5 seconds automatically
 - **Status Indicators**: Color-coded health status (green/yellow/red)
 - **Mobile Responsive**: Works perfectly on all devices
-
-### How It Works
-
-The server uses a **dual-process architecture**:
-1. **Nginx** (port 2333 or `$PORT`) - Serves the dashboard and proxies API requests
-2. **Lavalink** (port 8080 internal) - Handles audio streaming and bot connections
-
-Both processes run in the same Docker container managed by supervisord, ensuring both stay running together. This design is fully compatible with Render's single-port requirement.
 
 ### Technical Architecture
 
@@ -111,7 +137,7 @@ Both processes run in the same Docker container managed by supervisord, ensuring
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Hjgaming/lavalink-server.git
+   git clone https://github.com/exeptionhandler/lavalink-server.git
    cd lavalink-server
    ```
 
@@ -138,26 +164,21 @@ Both processes run in the same Docker container managed by supervisord, ensuring
 
 ### Using Docker Compose
 
-1. **Create `docker-compose.yml`:**
-   ```yaml
-   version: '3.8'
-   services:
-     lavalink:
-       build: .
-       ports:
-         - "2333:2333"
-       environment:
-         - LAVALINK_SERVER_PASSWORD=your_secure_password
-         - PORT=2333
-       restart: unless-stopped
-       volumes:
-         - ./logs:/opt/Lavalink/logs
-   ```
-
-2. **Start the service:**
-   ```bash
-   docker-compose up -d
-   ```
+```yaml
+version: '3.8'
+services:
+  lavalink:
+    build: .
+    ports:
+      - "2333:2333"
+    environment:
+      - LAVALINK_SERVER_PASSWORD=your_secure_password
+      - PORT=2333
+      - YOUTUBE_REFRESH_TOKEN=your_refresh_token
+    restart: unless-stopped
+    volumes:
+      - ./logs:/opt/Lavalink/logs
+```
 
 ## ⚙️ Configuration
 
@@ -166,7 +187,8 @@ Both processes run in the same Docker container managed by supervisord, ensuring
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `PORT` | No | `2333` | Server port |
-| `LAVALINK_SERVER_PASSWORD` | **Yes** | - | Server password (must be set!) |
+| `LAVALINK_SERVER_PASSWORD` | **Yes** | - | Server password |
+| `YOUTUBE_REFRESH_TOKEN` | No | - | YouTube OAuth refresh token (from burner account — see OAuth setup above) |
 | `SPOTIFY_CLIENT_ID` | No | - | Spotify API client ID |
 | `SPOTIFY_CLIENT_SECRET` | No | - | Spotify API client secret |
 | `SPOTIFY_COUNTRY_CODE` | No | `US` | Spotify country code |
@@ -189,51 +211,13 @@ Both processes run in the same Docker container managed by supervisord, ensuring
 **Apple Music:**
 1. Visit [Apple Music API](https://developer.apple.com/documentation/applemusicapi/getting_keys_and_creating_tokens)
 2. Generate a developer token
-3. Use it as `APPLE_MUSIC_API_TOKEN`
 
 **Deezer:**
 - Requires a master decryption key (advanced users only)
 
 ## 💻 Usage
 
-### Connecting from Discord.js Bot (with Erela.js)
-
-```javascript
-const { Client } = require('discord.js');
-const { Manager } = require('erela.js');
-
-const client = new Client({
-  intents: ['Guilds', 'GuildVoiceStates', 'GuildMessages']
-});
-
-client.manager = new Manager({
-  nodes: [{
-    host: 'your-service-name.onrender.com',
-    port: 443,
-    password: 'your_lavalink_password',
-    secure: true
-  }],
-  send: (id, payload) => {
-    const guild = client.guilds.cache.get(id);
-    if (guild) guild.shard.send(payload);
-  }
-});
-
-client.manager.on('nodeConnect', node => {
-  console.log(`Node "${node.options.identifier}" connected.`);
-});
-
-client.on('ready', () => {
-  client.manager.init(client.user.id);
-  console.log('Bot is ready!');
-});
-
-client.on('raw', d => client.manager.updateVoiceState(d));
-
-client.login('your_discord_bot_token');
-```
-
-### Connecting from Discord.js Bot (with Shoukaku)
+### Connecting with Shoukaku
 
 ```javascript
 const { Client } = require('discord.js');
@@ -250,193 +234,86 @@ const shoukaku = new Shoukaku(
     url: 'your-service-name.onrender.com:443',
     auth: 'your_lavalink_password',
     secure: true
-  }]
+  }],
+  {
+    reconnectTries: 3,
+    reconnectInterval: 5000,
+    restTimeout: 60000
+  }
 );
 
-shoukaku.on('ready', (name) => {
-  console.log(`Lavalink ${name} is ready!`);
-});
-
+shoukaku.on('ready', (name) => console.log(`Lavalink ${name} is ready!`));
 client.login('your_discord_bot_token');
 ```
 
 ## 🌐 Available Endpoints
 
-- `GET /` - **NEW!** Web dashboard (monitoring interface)
-- `GET /version` - Get Lavalink version info (health check)
-- `GET /info` - Get node information
-- `GET /stats` - Get node statistics
+- `GET /` - Web dashboard
+- `GET /version` - Lavalink version (health check)
+- `GET /info` - Node information
+- `GET /stats` - Node statistics
 - `GET /metrics` - Prometheus metrics (if enabled)
-- `WS /v4/websocket` - WebSocket endpoint for bot connections
+- `WS /v4/websocket` - WebSocket for bot connections
 - `GET /v4/*` - All v4 API endpoints
 
 ## 🔒 Security
 
-### Best Practices
-
 1. **Strong Password**: Always use a strong, unique password
    ```bash
-   # Generate a secure password
    openssl rand -base64 32
    ```
-
 2. **Environment Variables**: Never commit `.env` files or hardcode secrets
-
 3. **HTTPS**: Use HTTPS/WSS in production (Render provides this automatically)
-
-4. **Firewall**: Restrict access to your Lavalink server if possible
-
-5. **Updates**: Keep Lavalink and plugins updated regularly
-
-### Security Checklist
-
-- [ ] Changed default password
-- [ ] Using environment variables for all secrets
-- [ ] HTTPS/WSS enabled in production
-- [ ] `.env` file is in `.gitignore`
-- [ ] Regular security updates applied
-
-## ⚡ Performance Tips for Render
-
-### Free Plan Optimization
-
-- The server is configured to use minimal memory (128-512MB)
-- Reduce concurrent connections if experiencing issues
-- Consider upgrading to a paid plan for better performance
-
-### Paid Plan Recommendations
-
-For production bots with high traffic:
-
-1. **Starter Plan or Higher**: Better CPU and memory
-2. **Enable Persistent Disk**: Store logs persistently
-3. **Custom Domain**: Use your own domain
-4. **Auto-scaling**: Configure based on traffic
-
-### Memory Configuration
-
-Adjust JVM memory in `Dockerfile` based on your plan:
-
-```dockerfile
-# For Render Free plan (default)
-CMD ["java", "-Xmx512m", "-Xms128m", ...]
-
-# For Render Starter plan
-CMD ["java", "-Xmx1g", "-Xms256m", ...]
-
-# For Render Pro plan
-CMD ["java", "-Xmx2g", "-Xms512m", ...]
-```
+4. **OAuth Token**: Store the YouTube refresh token only as an env var, never in code
 
 ## 🐛 Troubleshooting
 
-### Dashboard Not Loading
+### YouTube tracks fail with "This video requires login"
 
-- Check that both Nginx and Lavalink are running: `docker logs <container-name>`
-- Verify the port is correctly set: `echo $PORT`
-- Check supervisor logs: `docker exec <container> cat /var/log/supervisor/supervisord.log`
-- Ensure port 2333 (or your custom port) is accessible
-
-### Dashboard Shows "Offline" Status
-
-- Lavalink may still be starting (wait 30-60 seconds after container start)
-- Check Lavalink logs: `docker exec <container> cat /var/log/supervisor/lavalink.out.log`
-- Verify Lavalink is running on internal port 8080
-- Check for errors in browser console (F12)
+- OAuth is not configured yet → Follow the [YouTube OAuth Setup](#-youtube-oauth-setup) section
+- The `YOUTUBE_REFRESH_TOKEN` env var is empty or invalid → Re-do the OAuth flow with a burner account
+- Make sure the `TV` client is listed in your `application.yml`
 
 ### API Endpoints Return 502 Bad Gateway
 
 - Lavalink backend is not running or failed to start
-- Check Lavalink logs for errors
-- Verify application.yml configuration is correct
-- Ensure LAVALINK_SERVER_PASSWORD is set
+- Check logs for errors
+- Verify `application.yml` configuration is correct
+- Ensure `LAVALINK_SERVER_PASSWORD` is set
 
-### Container Won't Start
+### Render Cold Start Timeout (Free Tier)
 
-- Check logs: `docker logs lavalink`
-- Verify environment variables are set correctly
-- Ensure port 2333 is not already in use
-- Check that all required files are present in the build
-
-### Connection Issues
-
-- Verify password matches in bot and server
-- Check firewall rules
-- Ensure correct host/port in bot configuration
-- For WebSocket: Make sure `/v4/websocket` path is used
-
-### Render Cold Start Timeout (IMPORTANT for Free Tier)
-
-Render's free tier "spins down" your service after 15 minutes of inactivity. When a bot tries to connect, the server needs time to start up. **This can take 30-60 seconds**.
-
-**Solution:** Increase your bot's Lavalink connection timeout:
+Render's free tier spins down after 15 minutes of inactivity. Startup can take 30-60 seconds.
 
 ```javascript
-// For Shoukaku
-const shoukaku = new Shoukaku(
-  new Connectors.DiscordJS(client),
-  [{
-    name: 'Lavalink',
-    url: 'your-service-name.onrender.com:443',
-    auth: 'your_password',
-    secure: true
-  }],
-  {
-    reconnectTries: 3,
-    reconnectInterval: 5000,
-    restTimeout: 60000,        // 60 seconds for REST calls
-    moveOnDisconnect: false
-  }
-);
-
-// For Erela.js
-client.manager = new Manager({
-  nodes: [{
-    host: 'your-service-name.onrender.com',
-    port: 443,
-    password: 'your_password',
-    secure: true,
-    retryDelay: 5000,
-    requestTimeout: 60000  // 60 seconds timeout
-  }],
-  // ... rest of your config
-});
+// Increase timeout in Shoukaku
+{
+  reconnectTries: 3,
+  reconnectInterval: 5000,
+  restTimeout: 60000  // 60 seconds
+}
 ```
-
-**Tip:** To keep your server warm, you can set up a cron job or monitoring service to ping your `/health` endpoint every 10 minutes.
 
 ### Plugin Errors
 
-- Plugins require API credentials to work
-- Check that environment variables are set
-- Review logs for specific plugin errors
+- Check that environment variables for the specific plugin are set
+- Review logs for specific error messages
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## 🙏 Acknowledgments
 
 - [Lavalink](https://github.com/lavalink-devs/Lavalink) - The amazing audio streaming node
+- [youtube-source](https://github.com/lavalink-devs/youtube-source) - YouTube plugin with OAuth support
 - [LavaSrc](https://github.com/topi314/LavaSrc) - Multi-source plugin
-- [LavaSearch](https://github.com/topi314/LavaSearch) - Enhanced search plugin
-- [SponsorBlock](https://github.com/topi314/Sponsorblock-Plugin) - SponsorBlock integration
 
 ## 📞 Support
 
 - [Lavalink Documentation](https://lavalink.dev/)
 - [Render Documentation](https://render.com/docs)
-- [Discord.js Guide](https://discordjs.guide/)
+- [youtube-source Docs](https://github.com/lavalink-devs/youtube-source)
 
 ---
 
