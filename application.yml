@@ -5,7 +5,7 @@ server:
 lavalink:
   # Plugins enabled
   plugins:
-    # YouTube Source Plugin - Mandatory for v4
+    # YouTube Source Plugin - replaces the built-in lavaplayer YouTube source
     - dependency: "dev.lavalink.youtube:youtube-plugin:1.17.0"
       repository: "https://maven.lavalink.dev/releases"
     # LavaSrc - Adds support for Spotify, Apple Music, Deezer, and more
@@ -15,7 +15,8 @@ lavalink:
   server:
     password: ${LAVALINK_SERVER_PASSWORD:arbotixop007}
     sources:
-      youtube: true
+      # IMPORTANT: must be false so the youtube-plugin handles YouTube instead of lavaplayer's broken built-in source
+      youtube: false
       bandcamp: true
       soundcloud: true
       twitch: true
@@ -24,7 +25,6 @@ lavalink:
       local: false
     
     filters:
-      # Enable all audio filters
       volume: true
       equalizer: true
       karaoke: true
@@ -36,7 +36,6 @@ lavalink:
       channelMix: true
       lowPass: true
     
-    # Performance settings
     bufferDurationMs: 400
     frameBufferDurationMs: 5000
     opusEncodingQuality: ${OPUS_ENCODING_QUALITY:10}
@@ -69,7 +68,6 @@ plugins:
       - "ytsearch:\"%ISRC%\""
       - "ytsearch:%QUERY%"
     sources:
-      # Disable by default to prevent crashes if tokens are missing
       spotify: ${SPOTIFY_ENABLED:false}
       applemusic: ${APPLE_MUSIC_ENABLED:false}
       deezer: ${DEEZER_ENABLED:false}
@@ -91,15 +89,6 @@ plugins:
     
     deezer:
       masterDecryptionKey: ${DEEZER_MASTER_KEY:""}
-#   
-#   # LavaSearch configuration
-#   lavasearch:
-#     sources:
-#       youtube: true
-#       soundcloud: true
-#       spotify: true
-#       applemusic: true
-#       deezer: true
 
 metrics:
   prometheus:
