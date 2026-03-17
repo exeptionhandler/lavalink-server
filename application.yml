@@ -50,12 +50,11 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # Clients that work on datacenter IPs (no login required)
     clients:
-      - ANDROID_LITE
       - MUSIC
       - ANDROID_VR
-      - WEB_EMBEDDED_PLAYER
+      - WEB
+      - WEBEMBEDDED
   
   lavasrc:
     providers:
