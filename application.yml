@@ -53,8 +53,10 @@ plugins:
     clients:
       - MUSIC
       - WEB
+      - WEB_OAUTH
     oauth:
       enabled: true
+      refreshToken: ${YOUTUBE_REFRESH_TOKEN:}
   
   lavasrc:
     providers:
