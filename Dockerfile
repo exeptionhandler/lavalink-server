@@ -43,7 +43,8 @@ COPY start.sh /opt/start.sh
 RUN chmod +x /opt/start.sh
 
 # Create necessary directories and set permissions
-RUN mkdir -p /var/log/nginx /opt/Lavalink/logs /run/nginx && \
+# plugins/ directory is required for Lavalink to download plugins at runtime
+RUN mkdir -p /var/log/nginx /opt/Lavalink/logs /opt/Lavalink/plugins /run/nginx && \
     chown -R lavalink:lavalink /opt/Lavalink && \
     chmod 755 /var/log/nginx /run/nginx
 
