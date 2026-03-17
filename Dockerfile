@@ -42,9 +42,16 @@ COPY public/ /usr/share/nginx/html/
 COPY start.sh /opt/start.sh
 RUN chmod +x /opt/start.sh
 
+# Pre-download plugins at build time so they are baked into the image
+# This avoids runtime download failures on Render's ephemeral filesystem
+RUN mkdir -p /opt/Lavalink/plugins && \
+    curl -fsSL -o /opt/Lavalink/plugins/youtube-plugin.jar \
+      "https://maven.lavalink.dev/releases/dev/lavalink/youtube/youtube-plugin/1.17.0/youtube-plugin-1.17.0.jar" && \
+    curl -fsSL -o /opt/Lavalink/plugins/lavasrc-plugin.jar \
+      "https://maven.lavalink.dev/releases/com/github/topi314/lavasrc/lavasrc-plugin/4.8.1/lavasrc-plugin-4.8.1.jar"
+
 # Create necessary directories and set permissions
-# plugins/ directory is required for Lavalink to download plugins at runtime
-RUN mkdir -p /var/log/nginx /opt/Lavalink/logs /opt/Lavalink/plugins /run/nginx && \
+RUN mkdir -p /var/log/nginx /opt/Lavalink/logs /run/nginx && \
     chown -R lavalink:lavalink /opt/Lavalink && \
     chmod 755 /var/log/nginx /run/nginx
 
