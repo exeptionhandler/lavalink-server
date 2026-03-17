@@ -52,8 +52,10 @@ plugins:
     allowDirectPlaylistIds: true
     clients:
       - TV           # OAuth principal — bypass bot-check y age-restrict
-      - TVHTML5_SIMPLY  # Fallback sin cipher
+      - ANDROID      # Alternativa con OAuth (si se soporta)
+      - MWEB         # Alternativa móvil
       - MUSIC        # Solo para ytmsearch:
+      - TVHTML5_SIMPLY # Fallback sin cipher
     oauth:
       enabled: true
       refreshToken: ${YOUTUBE_REFRESH_TOKEN:}
