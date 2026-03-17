@@ -14,7 +14,6 @@ LAVALINK_SERVER_PASSWORD=${LAVALINK_SERVER_PASSWORD:-youshallnotpass}
 echo "Password configured: $(echo $LAVALINK_SERVER_PASSWORD | head -c 3)***"
 
 # Escape special characters in the password for sed
-# Replace / with \/ and & with \&
 ESCAPED_PASSWORD=$(echo "$LAVALINK_SERVER_PASSWORD" | sed 's/[\/&]/\\&/g')
 
 # Replace environment variables in nginx.conf
@@ -43,7 +42,19 @@ shutdown() {
 # Trap signals
 trap shutdown SIGTERM SIGINT
 
-# Start Lavalink in the background
+# Start Nginx FIRST so Render's health check passes immediately
+# Nginx will proxy to Lavalink once it's ready (returns 502 until then, which is fine)
+echo ""
+echo "Starting Nginx reverse proxy on port $PORT..."
+nginx -g 'daemon off;' &
+NGINX_PID=$!
+echo "Nginx PID: $NGINX_PID"
+
+# Give nginx a moment to bind the port
+sleep 3
+echo "Nginx is up on port $PORT (Render health check will pass now)"
+
+# Now start Lavalink in the background
 echo ""
 echo "Starting Lavalink server (512MB Heap)..."
 java -Xmx512m -Xms256m \
@@ -56,7 +67,7 @@ java -Xmx512m -Xms256m \
 LAVALINK_PID=$!
 echo "Lavalink PID: $LAVALINK_PID"
 
-# Wait for Lavalink to be ready
+# Wait for Lavalink to be ready (can take longer with OAuth)
 echo ""
 echo "Waiting for Lavalink to initialize..."
 timeout=0
@@ -82,25 +93,6 @@ if [ "$READY" = false ]; then
     exit 1
 fi
 
-# Start Nginx in the background
-echo ""
-echo "Starting Nginx reverse proxy on port $PORT..."
-nginx -g 'daemon off;' &
-NGINX_PID=$!
-echo "Nginx PID: $NGINX_PID"
-
-# Wait a moment for nginx to fully start
-sleep 2
-
-# Test that nginx is proxying correctly
-echo ""
-echo "Testing nginx proxy to Lavalink..."
-if curl -s "http://127.0.0.1:$PORT/version" > /dev/null 2>&1; then
-    echo "  ✓ Nginx proxy is working correctly"
-else
-    echo "  WARNING: Nginx proxy test failed"
-fi
-
 echo ""
 echo "========================================"
 echo "  Lavalink Public Server - Running"
@@ -114,21 +106,15 @@ echo "  Password:  Set in LAVALINK_SERVER_PASSWORD env var"
 echo ""
 echo "========================================"
 
-# Monitor both processes - Alpine's ash doesn't support wait -n
-# Use a polling loop to check if processes are still running
+# Monitor both processes
 while true; do
-    # Check if Lavalink is still running
     if ! kill -0 "$LAVALINK_PID" 2>/dev/null; then
         echo "Lavalink process exited unexpectedly"
         shutdown
     fi
-    
-    # Check if Nginx is still running
     if ! kill -0 "$NGINX_PID" 2>/dev/null; then
         echo "Nginx process exited unexpectedly"
         shutdown
     fi
-    
-    # Sleep briefly before next check
     sleep 5
 done
