@@ -55,6 +55,11 @@ plugins:
       - ANDROID_VR
       - WEB
       - WEBEMBEDDED
+    oauth:
+      enabled: true
+      # refreshToken will be filled automatically after first login
+      # or you can set it manually here after activating at youtube.com/activate
+      refreshToken: ""
   
   lavasrc:
     providers:
