@@ -1,42 +1,104 @@
-# 🎵 Lavalink Server (Enhanced Fork)
+# 🎵 Lavalink Server (Enhanced Production Fork)
 
 <div align="center">
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-blue?style=for-the-badge&logo=docker)](https://hub.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
-**Production-ready Lavalink node with single-port architecture, integrated dashboard, and simplified deployment**
+**A production-focused Lavalink node with single-port architecture, integrated dashboard, and zero-friction deployment**
 
 </div>
 
 ---
 
-## 🚀 What makes this fork different?
+## 🚀 Overview
 
-This is not just another Lavalink setup. This fork introduces:
+This project is an **enhanced fork** of a Lavalink server setup, redesigned with a strong focus on:
 
-- 🔁 **Single-port architecture** using Nginx (ideal for Render & similar platforms)
-- 📊 **Integrated real-time dashboard** served on the same port
-- ⚡ **Simplified deployment** (1-click + minimal configuration)
-- 🔌 **Pre-configured plugins** (LavaSrc + YouTube OAuth)
-- 🔐 **Secure environment-based configuration**
+- real-world deployment constraints
+- developer experience
+- observability and monitoring
+
+It is optimized specifically for platforms like **Render**, where traditional Lavalink setups fail due to multi-port limitations.
 
 ---
 
-## 🧠 Architecture Overview
+## 💡 Key Innovations
+
+### 🔁 Single-Port Architecture
+- Uses **Nginx reverse proxy** to serve:
+  - Dashboard (`/`)
+  - Lavalink API (`/v4/*`)
+  - WebSocket (`/v4/websocket`)
+- Solves **Render's single-port limitation**
+
+---
+
+### 📊 Integrated Dashboard
+- Real-time monitoring (CPU, RAM, players, frames)
+- Runs on the same port (no extra services)
+- Mobile-friendly UI
+
+---
+
+### ⚡ Developer Experience
+- One-click deployment
+- Minimal configuration
+- Pre-integrated plugins (LavaSrc + YouTube OAuth)
+
+---
+
+### 🔐 Secure by Design
+- No hardcoded secrets
+- Fully environment-based config
+- OAuth handled safely via refresh tokens
+
+---
+
+## 🧠 Architecture
+
+            ┌──────────────────────────┐
+            │        Client/Bot        │
+            └────────────┬─────────────┘
+                         │
+                         ▼
+                ┌────────────────┐
+                │   Nginx Proxy  │  (Port 2333)
+                └───────┬────────┘
+                        │
+     ┌──────────────────┴──────────────────┐
+     │                                     │
+
+┌───────▼────────┐ ┌────────▼────────┐
+│ Dashboard │ │ Lavalink │
+│ (Static UI) │ │ (Java Node) │
+│ "/" │ │ "/v4/*" │
+└────────────────┘ └─────────────────┘
 
 
-Client → Nginx (Port 2333)
-├── / → Dashboard (static frontend)
-└── /v4/* → Lavalink backend (API + WebSocket)
+---
 
+## 🧠 Architecture Decisions
 
-### Why this matters
+### Why Nginx?
+- Required for **port multiplexing**
+- Handles HTTP + WebSocket cleanly
+- Lightweight and production-proven
 
-- Platforms like Render only allow **one exposed port**
-- Avoids running multiple services
-- Clean separation between frontend and backend
+---
+
+### Why single container?
+- Simplifies deployment
+- Avoids multi-service orchestration
+- Ideal for PaaS (Render, Railway, etc.)
+
+---
+
+### Why dashboard inside same service?
+- Eliminates need for external monitoring tools
+- Faster debugging
+- Better UX for developers
 
 ---
 
@@ -47,57 +109,70 @@ Client → Nginx (Port 2333)
 ├── nginx/ # Reverse proxy configuration
 ├── dashboard/ # Static frontend dashboard
 ├── application.yml # Lavalink configuration
-├── Dockerfile # Container setup
+├── Dockerfile # Optimized container setup
 └── .env.example # Environment variables template
 
 
 ---
 
-## 🔄 Differences from upstream
+## 🔄 Differences from Upstream
 
-Compared to the original project, this fork:
-
-- Adds a **built-in dashboard**
-- Implements **single-port reverse proxy**
-- Improves **deployment experience**
-- Pre-configures plugins and OAuth flow
+| Feature                     | Original | This Fork |
+|----------------------------|----------|----------|
+| Single-port support        | ❌        | ✅        |
+| Built-in dashboard         | ❌        | ✅        |
+| Render-ready deployment    | ⚠️        | ✅        |
+| Pre-configured plugins     | ❌        | ✅        |
+| Simplified setup           | ❌        | ✅        |
 
 ---
 
-## 🧪 Performance Notes
+## 🧪 Performance
 
-Typical usage:
+Typical baseline:
 
-- 🧠 RAM: ~200MB–500MB
-- ⚙️ CPU: Low–moderate (depends on active players)
-- 🎧 Suitable for small to medium Discord bots
+- 🧠 RAM: 200MB – 500MB
+- ⚙️ CPU: Low to moderate
+- 🎧 Handles small–medium Discord bots comfortably
+
+> Performance depends heavily on active players and filters used.
 
 ---
 
 ## 🚀 Quick Deploy
 
-1. Click deploy (Render)
+1. Click **Deploy to Render**
 2. Set:
-   - `LAVALINK_SERVER_PASSWORD`
+
+LAVALINK_SERVER_PASSWORD
+
 3. Done ✅
 
 ---
 
-## 🔐 Security Notes
+## 🔐 Security
 
-- Never commit `.env` files
+- Never commit `.env`
 - Always use strong passwords
-- Use a burner account for YouTube OAuth
+- Use **burner account** for YouTube OAuth
+- Prefer HTTPS/WSS in production
 
 ---
 
-## 🧠 Author Notes
+## 🧠 Design Philosophy
 
-This project focuses on **real-world deployment**, prioritizing:
+This project prioritizes:
 
-- simplicity
-- compatibility with cloud platforms
-- minimal setup friction
+- **Practical deployment over complexity**
+- **Developer experience over configuration overload**
+- **Real-world constraints over theoretical setups**
+
+---
+
+## 📸 (Recommended)
+
+> Add screenshots here to showcase the dashboard  
+> This significantly improves perceived quality
 
 ---
 
