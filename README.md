@@ -14,165 +14,92 @@
 
 ## 🚀 Overview
 
-This project is an **enhanced fork** of a Lavalink server setup, redesigned with a strong focus on:
+This project is an enhanced fork of a Lavalink server setup, redesigned for:
 
 - real-world deployment constraints
-- developer experience
-- observability and monitoring
-
-It is optimized specifically for platforms like **Render**, where traditional Lavalink setups fail due to multi-port limitations.
+- better developer experience
+- built-in observability
 
 ---
 
 ## 💡 Key Innovations
 
 ### 🔁 Single-Port Architecture
-- Uses **Nginx reverse proxy** to serve:
-  - Dashboard (`/`)
-  - Lavalink API (`/v4/*`)
-  - WebSocket (`/v4/websocket`)
-- Solves **Render's single-port limitation**
-
----
+- Nginx reverse proxy
+- Supports HTTP + WebSocket
+- Works on Render (single-port limit)
 
 ### 📊 Integrated Dashboard
-- Real-time monitoring (CPU, RAM, players, frames)
-- Runs on the same port (no extra services)
-- Mobile-friendly UI
-
----
+- Real-time metrics
+- Same port as Lavalink
+- No extra services
 
 ### ⚡ Developer Experience
-- One-click deployment
-- Minimal configuration
-- Pre-integrated plugins (LavaSrc + YouTube OAuth)
-
----
-
-### 🔐 Secure by Design
-- No hardcoded secrets
-- Fully environment-based config
-- OAuth handled safely via refresh tokens
+- One-click deploy
+- Minimal config
+- Plugins ready out-of-the-box
 
 ---
 
 ## 🧠 Architecture
 
-            ┌──────────────────────────┐
-            │        Client/Bot        │
-            └────────────┬─────────────┘
-                         │
-                         ▼
-                ┌────────────────┐
-                │   Nginx Proxy  │  (Port 2333)
-                └───────┬────────┘
-                        │
-     ┌──────────────────┴──────────────────┐
-     │                                     │
-
-┌───────▼────────┐ ┌────────▼────────┐
-│ Dashboard │ │ Lavalink │
-│ (Static UI) │ │ (Java Node) │
-│ "/" │ │ "/v4/*" │
-└────────────────┘ └─────────────────┘
-
+```
+Client → Nginx (Port 2333)
+        ├── /        → Dashboard
+        └── /v4/*    → Lavalink
+```
 
 ---
 
-## 🧠 Architecture Decisions
+## 📁 Structure
 
-### Why Nginx?
-- Required for **port multiplexing**
-- Handles HTTP + WebSocket cleanly
-- Lightweight and production-proven
-
----
-
-### Why single container?
-- Simplifies deployment
-- Avoids multi-service orchestration
-- Ideal for PaaS (Render, Railway, etc.)
-
----
-
-### Why dashboard inside same service?
-- Eliminates need for external monitoring tools
-- Faster debugging
-- Better UX for developers
-
----
-
-## 📁 Project Structure
-
-
+```
 .
-├── nginx/ # Reverse proxy configuration
-├── dashboard/ # Static frontend dashboard
-├── application.yml # Lavalink configuration
-├── Dockerfile # Optimized container setup
-└── .env.example # Environment variables template
-
+├── nginx/
+├── dashboard/
+├── application.yml
+├── Dockerfile
+└── .env.example
+```
 
 ---
 
-## 🔄 Differences from Upstream
+## 🔄 Differences from upstream
 
-| Feature                     | Original | This Fork |
-|----------------------------|----------|----------|
-| Single-port support        | ❌        | ✅        |
-| Built-in dashboard         | ❌        | ✅        |
-| Render-ready deployment    | ⚠️        | ✅        |
-| Pre-configured plugins     | ❌        | ✅        |
-| Simplified setup           | ❌        | ✅        |
+- Dashboard added
+- Single-port proxy
+- Better deployment UX
+- Pre-configured plugins
 
 ---
 
 ## 🧪 Performance
 
-Typical baseline:
-
-- 🧠 RAM: 200MB – 500MB
-- ⚙️ CPU: Low to moderate
-- 🎧 Handles small–medium Discord bots comfortably
-
-> Performance depends heavily on active players and filters used.
+- RAM: ~200–500MB
+- CPU: low–moderate
 
 ---
 
-## 🚀 Quick Deploy
+## 🚀 Deploy
 
-1. Click **Deploy to Render**
-2. Set:
-
-LAVALINK_SERVER_PASSWORD
-
-3. Done ✅
+1. Deploy to Render
+2. Set password
+3. Done
 
 ---
 
 ## 🔐 Security
 
-- Never commit `.env`
-- Always use strong passwords
-- Use **burner account** for YouTube OAuth
-- Prefer HTTPS/WSS in production
+- No hardcoded secrets
+- Use env variables
+- Use burner account for YouTube OAuth
 
 ---
 
-## 🧠 Design Philosophy
+## 🧠 Philosophy
 
-This project prioritizes:
-
-- **Practical deployment over complexity**
-- **Developer experience over configuration overload**
-- **Real-world constraints over theoretical setups**
-
----
-
-## 📸 (Recommended)
-
-> Add screenshots here to showcase the dashboard  
-> This significantly improves perceived quality
+Simple > complex
+Real-world > theoretical
 
 ---
 
